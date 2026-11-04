@@ -1,0 +1,14 @@
+{
+  "name": "hodline-engine",
+  "private": true,
+  "version": "1.0.0",
+  "description": "The deterministic game engine behind hodline.xyz and the replay that verifies every run.",
+  "type": "module",
+  "scripts": {
+    "build": "esbuild src/game/replay.ts --bundle --format=esm --platform=node --outfile=dist/replay.mjs --define:import.meta.env.BASE_URL='\"/\"' --log-level=warning",
+    "verify": "npm run build && node verify.mjs examples/endless-wave-51.json"
+  },
+  "devDependencies": {
+    "esbuild": "0.21.5"
+  }
+}
