@@ -394,10 +394,16 @@ export const ENDLESS = {
    * runs of 12, three revives go further still. Hard, not impossible.
    */
   lateFrom: 25,
-  lateGrowth: 1.12,
+  lateGrowth: 1.115,
   /** The endless boss: 14x a grunt's HP (campaign 22x), and 2 lives if it leaks (campaign 3). */
   bossHpMult: 14,
   bossLivesCost: 2,
+  /**
+   * Bosses grow by one every ten waves until here. Five of them cost all 10
+   * lives, which made wave 52 a wall no amount of care could get past: a player
+   * who kept every life now reaches it, and one who did not still does not.
+   */
+  maxBosses: 4,
   goldScale: 0.85,
   countCap: 55, // campaign: 42
   bonusBase: 14, // campaign: 18
@@ -434,7 +440,7 @@ export function wavePlan(wave: number, endless = false): WavePlan {
   const interval = Math.max(0.45, 0.95 - wave * 0.012)
 
   if (wave % 10 === 0) {
-    const bossCount = Math.floor(wave / 10)
+    const bossCount = endless ? Math.min(ENDLESS.maxBosses, Math.floor(wave / 10)) : Math.floor(wave / 10)
     return {
       entries: withArmored(
         [

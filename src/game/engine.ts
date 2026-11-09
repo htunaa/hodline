@@ -96,7 +96,7 @@ export const TICK = 1 / 60
  * would not reproduce it. The verifier rejects the mismatch rather than
  * re-simulating under today's tables and calling the disagreement cheating.
  */
-export const RECORD_VERSION = 5
+export const RECORD_VERSION = 6
 /**
  * A revive rallies the towers: the wave fought again is fought at this much
  * damage. Without it a revive only refilled the lives, the same board met the
@@ -117,6 +117,8 @@ export interface SelectedTowerInfo {
   statArgs: number[]
   /** Who it shoots at. Null for the towers that do not aim (see `aims`). */
   target: TargetMode | null
+  /** Towers of the same kind aimed anywhere else: what "set all" would move. */
+  aimOthers: number
 }
 
 export interface HudState {
@@ -664,13 +666,38 @@ export class Engine {
    */
   setTargetAt(cellKey: string | null, mode: TargetMode): boolean {
     const t = cellKey ? this.towers.get(cellKey) : null
-    if (!t || !aims(t.kind) || !TARGET_MODES.includes(mode) || t.target === mode) return false
-    if (!this.headless) this.actions.push({ tick: this.tickCount, type: 'target', x: t.cell.x, y: t.cell.y, target: mode })
-    t.target = mode
-    this.lastTarget[t.kind] = mode
+    if (!t || !this.aim(t, mode)) return false
     sfx.play('tap')
     this.publishSelection()
     this.emit()
+    return true
+  }
+
+  /**
+   * Points every tower of the selected tower's kind where it points. Each one
+   * is recorded as its own `target` action, so a replay needs no new action and
+   * old engines' records are untouched. Returns how many towers moved.
+   */
+  aimAllLikeSelected(): number {
+    const picked = this.selectedCell ? this.towers.get(this.selectedCell) : null
+    if (!picked) return 0
+    let moved = 0
+    for (const t of this.towers.values()) {
+      if (t.kind === picked.kind && this.aim(t, picked.target)) moved++
+    }
+    if (moved) {
+      sfx.play('tap')
+      this.publishSelection()
+      this.emit()
+    }
+    return moved
+  }
+
+  private aim(t: Tower, mode: TargetMode): boolean {
+    if (!aims(t.kind) || !TARGET_MODES.includes(mode) || t.target === mode) return false
+    if (!this.headless) this.actions.push({ tick: this.tickCount, type: 'target', x: t.cell.x, y: t.cell.y, target: mode })
+    t.target = mode
+    this.lastTarget[t.kind] = mode
     return true
   }
 
@@ -1374,6 +1401,7 @@ export class Engine {
       statKey,
       statArgs,
       target: aims(t.kind) ? t.target : null,
+      aimOthers: [...this.towers.values()].filter((o) => o.kind === t.kind && o.target !== t.target).length,
     }
   }
 

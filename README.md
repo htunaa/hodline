@@ -86,13 +86,13 @@ npm install
 npm run verify
 ```
 
-This replays `examples/endless-wave-51.json`, a real wave-51 Endless run (166 inputs, about 28 minutes of play), in under a second:
+This replays `examples/endless-wave-51.json`, the inputs of a real wave-51 Endless run (166 inputs, about 28 minutes of play), on the current rules, in under a second:
 
 ```
 wave     51
-kills    1940
+kills    1936
 rejected 0
-score    52940
+score    52936
 OK: every action replayed cleanly
 ```
 
